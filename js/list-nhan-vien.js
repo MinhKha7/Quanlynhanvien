@@ -18,6 +18,8 @@ function FormNhanVien() {
     });
 
     this.listNhanVien = newListNhanVien;
+    this.renderTable();
+    this.luuDanhSachNhanVienLocal();
   };
   // =========================================
 
@@ -27,70 +29,111 @@ function FormNhanVien() {
       return this.listNhanVien;
     }
     var tempListNhanVien = this.listNhanVien.filter(function (nv) {
-      return nv.loaiNhanVien === loainhanvien;
+      // return nv.loaiNhanVien === loainhanvien;
+      // return nv.loaiNhanVien.toLowerCase().includes(loainhanvien.toLowerCase());
+      return nv.loaiNhanVien.toLowerCase() === loainhanvien.toLowerCase();
     });
     return tempListNhanVien;
   };
   // =========================================
 
-  // Cập nhật nhân viên
-  // this.capNhatNhanVien = function (nv) {
-  //   var index = this.listNhanVien.findIndex(function (nhanVien) {
-  //     return nhanVien.taiKhoan === nv.taiKhoan;
-  //   });
-  //   if (index === -1) return;
+  // Tìm nhân viên theo tài khoản
+  this.timKiemNhanVienTheoTaiKhoan = function (mnv) {
+    if (mnv === undefined || mnv === "") return;
+    var nhanVien = this.listNhanVien.find(function (nv) {
+      return nv.taiKhoan === mnv;
+    });
+    return nhanVien;
+  };
+  // =========================================
 
-  //   this.listNhanVien[index] = nv;
-  // };
+  // Render dữ liệu cũ lên form
+  this.renderDuLieuLenForm = function (nv) {
+    var listEle = document.querySelectorAll(
+      ".form-nhan-vien input, .form-nhan-vien select"
+    );
+
+    var mapper = {
+      // id trên html: "property" của NhanVien ,
+      tknv: "taiKhoan",
+      name: "hoTen",
+      email: "email",
+      password: "matKhau",
+      datepicker: "ngayLam",
+      luongCB: "luongCoBan",
+      chucvu: "chucVu",
+      gioLam: "gioLamThang",
+    };
+
+    listEle.forEach(function (ele) {
+      var property = mapper[ele.id];
+      ele.value = nv[property];
+    });
+  };
+  // =========================================
+
+  // Render Button Thêm - Sửa
+  this.renderForm = function (isEdit) {
+    var title = document.querySelector("#myModal #header-title");
+    // Lấy element button thêm nhân viên hay chỉnh sửa
+    var btn = document.querySelector("button#btnThem_CapNhat");
+
+    if (isEdit) {
+      title.innerHTML = "Cập nhật nhân viên";
+      btn.innerHTML = "Cập nhật nhân viên";
+      btn.classList.add("btn-primary");
+      btn.classList.remove("btn-success");
+    } else {
+      title.innerHTML = "Điền thông tin nhân viên";
+      btn.innerHTML = "Thêm nhân viên";
+      btn.classList.add("btn-success");
+      btn.classList.remove("btn-primary");
+    }
+  };
+  // =========================================
+
+  // Chỉnh sửa nhân viên
+  this.chinhSuaNhanVien = function (mnv) {
+    var nhanVien = this.timKiemNhanVienTheoTaiKhoan(mnv);
+    this.renderDuLieuLenForm(nhanVien);
+    isEdit = true;
+    this.renderForm(isEdit);
+    document.querySelector("#tknv").disabled = true;
+  };
+  // =========================================
+
+  // Cập nhật nhân viên
+  this.capNhatNhanVien = function (nv) {
+    var index = this.listNhanVien.findIndex(function (nhanVien) {
+      return nhanVien.taiKhoan === nv.taiKhoan;
+    });
+    if (index === -1) return;
+
+    this.listNhanVien[index] = nv;
+  };
 
   // Render table
-  this.renderTable = function () {
+  this.renderTable = function (tempListNhanVien) {
     var eleHtml = ``;
 
-    //Khai báo lại function "Tính tổng lương"
-    var tongLuong = 0;
-    function tinhTongLuong(chucVu, luongCoBan, gioLamThang) {
-      switch (chucVu) {
-        case "Giám đốc":
-          tongLuong = (luongCoBan / 26 / 8) * 3 * gioLamThang;
-      }
-      switch (chucVu) {
-        case "Trưởng phòng":
-          tongLuong = (luongCoBan / 26 / 8) * 2 * gioLamThang;
-      }
-      switch (chucVu) {
-        case "Nhân viên":
-          tongLuong = (luongCoBan / 26 / 8) * 1 * gioLamThang;
-      }
-      return tongLuong.toFixed(0);
+    if (!tempListNhanVien) {
+      tempListNhanVien = this.listNhanVien;
     }
 
-    // Khai báo lại function "Xếp loại nhân viên"
-    function xepLoaiNhanVien(gioLamThang) {
-      if (gioLamThang < 160) {
-        var loaiNhanVien = "Trung bình";
-      } else if (gioLamThang >= 160) {
-        var loaiNhanVien = "Khá";
-      } else if (gioLamThang >= 176) {
-        var loaiNhanVien = "Giỏi";
-      } else if (gioLamThang >= 192) {
-        var loaiNhanVien = "Xuất sắc";
-      }
-      return loaiNhanVien;
-    }
-
-    this.listNhanVien.forEach(function (nv) {
+    tempListNhanVien.forEach(function (nv) {
       eleHtml += `<tr>
         <th>${nv.taiKhoan}</th>
         <th>${nv.hoTen}</th>
         <th>${nv.email}</th>
         <th>${nv.ngayLam}</th>
         <th>${nv.chucVu}</th>
-        <th>${tinhTongLuong(nv.chucVu, nv.luongCoBan, nv.gioLamThang)}</th>
-        <th>${xepLoaiNhanVien(nv.gioLamThang)}</th>
+        <th>${nv.tongLuong}</th>
+        <th>${nv.loaiNhanVien}</th>
         <th>
-          <button>Sửa</button>
-          <button onclick="xoaNhanVien('${nv.taiKhoan}')">Xóa</button>
+          <button onclick="formNhanVien.chinhSuaNhanVien('${nv.taiKhoan}')" class="btn btn-primary" id="btnSua" data-toggle="modal" data-target="#myModal">
+                    Sửa
+                  </button>
+          <button onclick="formNhanVien.xoaNhanVien('${nv.taiKhoan}')">Xóa</button>
         </th>
       </tr>`;
     });
