@@ -33,6 +33,7 @@ function FormNhanVien() {
       // return nv.loaiNhanVien.toLowerCase().includes(loainhanvien.toLowerCase());
       return nv.loaiNhanVien.toLowerCase() === loainhanvien.toLowerCase();
     });
+
     return tempListNhanVien;
   };
   // =========================================
@@ -46,6 +47,20 @@ function FormNhanVien() {
     return nhanVien;
   };
   // =========================================
+
+  // Sắp xếp A->Z theo tài khoản
+  this.sortTaiKhoan = function (value) {
+    if (value === 1) {
+      danhSachMoi = this.listNhanVien.sort(function (a, b) {
+        return a.taiKhoan - b.taiKhoan;
+      });
+    } else {
+      danhSachMoi = this.listNhanVien.sort(function (a, b) {
+        return b.taiKhoan - a.taiKhoan;
+      });
+    }
+    this.renderTable();
+  };
 
   // Render dữ liệu cũ lên form
   this.renderDuLieuLenForm = function (nv) {
@@ -73,7 +88,7 @@ function FormNhanVien() {
   // =========================================
 
   // Render Button Thêm - Sửa
-  this.renderForm = function (isEdit) {
+  this.renderButton = function (isEdit) {
     var title = document.querySelector("#myModal #header-title");
     // Lấy element button thêm nhân viên hay chỉnh sửa
     var btn = document.querySelector("button#btnThem_CapNhat");
@@ -97,8 +112,10 @@ function FormNhanVien() {
     var nhanVien = this.timKiemNhanVienTheoTaiKhoan(mnv);
     this.renderDuLieuLenForm(nhanVien);
     isEdit = true;
-    this.renderForm(isEdit);
+    this.renderButton(isEdit);
     document.querySelector("#tknv").disabled = true;
+    // Xử lý lỗi cũ khi tắt popup vẫn không mất
+    this.resetErrors();
   };
   // =========================================
 
@@ -127,13 +144,17 @@ function FormNhanVien() {
         <th>${nv.email}</th>
         <th>${nv.ngayLam}</th>
         <th>${nv.chucVu}</th>
-        <th>${nv.tongLuong}</th>
+        <th>${Intl.NumberFormat("vn-VN").format(nv.tongLuong)}</th>
         <th>${nv.loaiNhanVien}</th>
         <th>
-          <button onclick="formNhanVien.chinhSuaNhanVien('${nv.taiKhoan}')" class="btn btn-primary" id="btnSua" data-toggle="modal" data-target="#myModal">
+          <button onclick="formNhanVien.chinhSuaNhanVien('${
+            nv.taiKhoan
+          }')" class="btn btn-warning" id="btnSua" data-toggle="modal" data-target="#myModal">
                     Sửa
                   </button>
-          <button onclick="formNhanVien.xoaNhanVien('${nv.taiKhoan}')">Xóa</button>
+          <button onclick="formNhanVien.xoaNhanVien('${
+            nv.taiKhoan
+          }')" class="btn btn-danger" id="btnXoa">Xóa</button>
         </th>
       </tr>`;
     });
@@ -143,6 +164,18 @@ function FormNhanVien() {
     tbody.innerHTML = eleHtml;
   };
   // =========================================
+
+  // Reset errors
+  this.resetErrors = function () {
+    listErrors = document.querySelectorAll(".form-message");
+    listErrors.forEach(function (ele) {
+      ele.innerHTML = "";
+    });
+    for (const key in errors) {
+      delete errors[key];
+    }
+  };
+  // ==========================================
 
   // Lưu danh sách nhân viên vào local
   this.luuDanhSachNhanVienLocal = function () {
